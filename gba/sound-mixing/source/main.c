@@ -264,9 +264,9 @@ int main(void) {
                 case 5: {
                     if (left && pcm_a_sample != -128) {
                         if (pcm_a_sample == 127) pcm_a_sample = 128;
-                        pcm_a_sample -= 16;
+                        pcm_a_sample -= 1;
                     } else if (right && pcm_a_sample != 127) {
-                        pcm_a_sample += 16;
+                        pcm_a_sample += 1;
                         if (pcm_a_sample == 128) pcm_a_sample = 127;
                     }
                     break;
@@ -278,9 +278,9 @@ int main(void) {
                 case 7: {
                     if (left && pcm_b_sample != -128) {
                         if (pcm_b_sample == 127) pcm_b_sample = 128;
-                        pcm_b_sample -= 16;
+                        pcm_b_sample -= 1;
                     } else if (right && pcm_b_sample != 127) {
-                        pcm_b_sample += 16;
+                        pcm_b_sample += 1;
                         if (pcm_b_sample == 128) pcm_b_sample = 127;
                     }
                     break;
