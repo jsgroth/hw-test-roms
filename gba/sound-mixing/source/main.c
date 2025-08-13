@@ -195,10 +195,10 @@ int main(void) {
         u16 pressed = ~new_inputs & inputs;
         inputs = new_inputs;
 
-        u16 right = pressed & (1 << 4);
-        u16 left = pressed & (1 << 5);
-        u16 up = pressed & (1 << 6);
-        u16 down = pressed & (1 << 7);
+        bool right = (pressed & (1 << 4)) != 0;
+        bool left = (pressed & (1 << 5)) != 0;
+        bool up = (pressed & (1 << 6)) != 0;
+        bool down = (pressed & (1 << 7)) != 0;
 
         if (up ^ down) {
             if (up) {
