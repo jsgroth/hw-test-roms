@@ -202,6 +202,9 @@ int main(void) {
         u16 pressed = ~new_inputs & inputs;
         inputs = new_inputs;
 
+        bool a_held = (new_inputs & 1) == 0;
+        s16 pcm_step = a_held ? 16 : 1;
+
         bool right = (pressed & (1 << 4)) != 0;
         bool left = (pressed & (1 << 5)) != 0;
         bool up = (pressed & (1 << 6)) != 0;
@@ -262,12 +265,12 @@ int main(void) {
                     break;
                 }
                 case 5: {
-                    if (left && pcm_a_sample != -128) {
-                        if (pcm_a_sample == 127) pcm_a_sample = 128;
-                        pcm_a_sample -= 1;
-                    } else if (right && pcm_a_sample != 127) {
-                        pcm_a_sample += 1;
-                        if (pcm_a_sample == 128) pcm_a_sample = 127;
+                    if (left) {
+                        pcm_a_sample -= pcm_step;
+                        if (pcm_a_sample < -128) pcm_a_sample = -128;
+                    } else {
+                        pcm_a_sample += pcm_step;
+                        if (pcm_a_sample > 127) pcm_a_sample = 127;
                     }
                     break;
                 }
@@ -276,12 +279,12 @@ int main(void) {
                     break;
                 }
                 case 7: {
-                    if (left && pcm_b_sample != -128) {
-                        if (pcm_b_sample == 127) pcm_b_sample = 128;
-                        pcm_b_sample -= 1;
-                    } else if (right && pcm_b_sample != 127) {
-                        pcm_b_sample += 1;
-                        if (pcm_b_sample == 128) pcm_b_sample = 127;
+                    if (left) {
+                        pcm_b_sample -= pcm_step;
+                        if (pcm_b_sample < -128) pcm_b_sample = -128;
+                    } else {
+                        pcm_b_sample += pcm_step;
+                        if (pcm_b_sample > 127) pcm_b_sample = 127;
                     }
                     break;
                 }
