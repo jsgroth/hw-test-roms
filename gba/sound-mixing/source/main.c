@@ -59,29 +59,30 @@ int main(void) {
     *SOUNDCNT_L = 0;
     *SOUNDBIAS = 0x200;
 
+    u16 pulse1_freq = 1720;
+    u16 pulse2_freq = 1600;
+    u16 wavetable_freq = 0;
+    u16 noise_freq = 4 | (7 << 4);
+
     // Initialize channel 1 (pulse w/ sweep)
-    // Sweep disabled, 50% duty, envelope disabled, max volume
+    // Sweep disabled, 50% duty, envelope disabled
     *SOUND1CNT_L = 1 << 3;
-    *SOUND1CNT_H = (2 << 6) | (15 << 12);
-    *SOUND1CNT_X = 1720 | (1 << 15);
+    *SOUND1CNT_H = (2 << 6);
 
     // Initialize channel 2 (pulse w/o sweep)
-    // 50% duty, envelope disabled, max volume
-    *SOUND2CNT_L = (2 << 6) | (15 << 12);
-    *SOUND2CNT_H = 1600 | (1 << 15);
+    // 50% duty, envelope disabled
+    *SOUND2CNT_L = (2 << 6);
 
     // Initialize channel 3 (wavetable)
-    // Alternating 0 and 15 samples, max volume
+    // Alternating 0 and 15 samples
     *SOUND3CNT_L = 1 << 6;
     for (int i = 0; i < 8; i++) WAVE_RAM[i] = 0x00FF;
-    *SOUND3CNT_L = 1 << 7;
+    *SOUND3CNT_L = 0;
     *SOUND3CNT_H = 1 << 13;
-    *SOUND3CNT_X = 0 | (1 << 15);
 
     // Initialize channel 4 (noise)
-    // Envelope disabled, max volume
-    *SOUND4CNT_L = 15 << 12;
-    *SOUND4CNT_H = 4 | (7 << 4) | (1 << 15);
+    // Envelope disabled
+    *SOUND4CNT_L = 0;
 
     bool pulse1_on = false;
     bool pulse2_on = false;
@@ -89,6 +90,7 @@ int main(void) {
     bool noise_on = false;
     bool pcm_a_on = false;
     bool pcm_b_on = false;
+    bool force_nr51 = false;
     u16 psg_volume = 2;
 
     s8 pcm_a_samples[4] = {};
@@ -191,6 +193,11 @@ int main(void) {
         itoa(psg_volume, s, 10);
         tte_write(s);
 
+        tte_set_pos(8, 128);
+        tte_erase_line();
+        tte_write("#{ci:11}Unmute disabled channels in NR51: ");
+        tte_write(force_nr51 ? "On" : "Off");
+
         u16 new_inputs = *KEYINPUT;
         u16 pressed = ~new_inputs & inputs;
         inputs = new_inputs;
@@ -202,9 +209,9 @@ int main(void) {
 
         if (up ^ down) {
             if (up) {
-                cursor = cursor == 0 ? 9 : cursor - 1;
+                cursor = cursor == 0 ? 10 : cursor - 1;
             } else if (down) {
-                cursor = (cursor == 9 ? 0 : cursor + 1);
+                cursor = (cursor == 10 ? 0 : cursor + 1);
             }
         }
 
@@ -212,18 +219,42 @@ int main(void) {
             switch (cursor) {
                 case 0: {
                     pulse1_on = !pulse1_on;
+                    if (pulse1_on) {
+                        *SOUND1CNT_H |= (15 << 12);
+                        *SOUND1CNT_X = pulse1_freq | (1 << 15);
+                    } else {
+                        *SOUND1CNT_H &= !(15 << 12);
+                    }
                     break;
                 }
                 case 1: {
                     pulse2_on = !pulse2_on;
+                    if (pulse2_on) {
+                        *SOUND2CNT_L |= (15 << 12);
+                        *SOUND2CNT_H = pulse2_freq | (1 << 15);
+                    } else {
+                        *SOUND2CNT_L &= !(15 << 12);
+                    }
                     break;
                 }
                 case 2: {
                     wavetable_on = !wavetable_on;
+                    if (wavetable_on) {
+                        *SOUND3CNT_L |= 1 << 7;
+                        *SOUND3CNT_X = wavetable_freq | (1 << 15);
+                    } else {
+                        *SOUND3CNT_L &= !(1 << 7);
+                    }
                     break;
                 }
                 case 3: {
                     noise_on = !noise_on;
+                    if (noise_on) {
+                        *SOUND4CNT_L |= 15 << 12;
+                        *SOUND4CNT_H = noise_freq | (1 << 15);
+                    } else {
+                        *SOUND4CNT_L &= !(15 << 12);
+                    }
                     break;
                 }
                 case 4: {
@@ -272,16 +303,24 @@ int main(void) {
                     }
                     break;
                 }
+                case 10: {
+                    force_nr51 = !force_nr51;
+                    break;
+                }
                 default: break;
             }
         }
 
         // Update PSG stereo control
-        *SOUNDCNT_L = 7 | (7 << 4)
-            | (pulse1_on << 8) | (pulse1_on << 12)
-            | (pulse2_on << 9) | (pulse2_on << 13)
-            | (wavetable_on << 10) | (wavetable_on << 14)
-            | (noise_on << 11) | (noise_on << 15);
+        if (force_nr51) {
+            *SOUNDCNT_L = 7 | (7 << 4) | (15 << 8) | (15 << 12);
+        } else {
+            *SOUNDCNT_L = 7 | (7 << 4)
+                | (pulse1_on << 8) | (pulse1_on << 12)
+                | (pulse2_on << 9) | (pulse2_on << 13)
+                | (wavetable_on << 10) | (wavetable_on << 14)
+                | (noise_on << 11) | (noise_on << 15);
+        }
 
         // Update GBA sound control
         *SOUNDCNT_H = psg_volume | (1 << 2) | (1 << 3)
