@@ -131,7 +131,7 @@ int main(void) {
         tte_init_chr4c_default(odd_frame ? 1 : 0, BG_CBB(odd_frame ? 2 : 0) | BG_SBB(odd_frame ? 31 : 30));
 
         for (int i = 0; i < 15; i++) {
-            PALETTE_RAM[15 * 16 + i + 1] = cursor == i ? 0xFFFF : 0x03FF;
+            PALETTE_RAM[15 * 16 + i + 1] = cursor == i ? 0xFFFF : 0x001F;
         }
 
         tte_set_pos(8, 8);
