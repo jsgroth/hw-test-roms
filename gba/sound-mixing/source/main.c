@@ -50,6 +50,9 @@ volatile u16* KEYINPUT    = (volatile u16*)0x4000130;
 
 volatile u16* PALETTE_RAM = (volatile u16*)0x5000000;
 
+u16 WAVETABLE_SAMPLES[4] = {0x00FF, 0xFF00, 0x0000, 0xFFFF};
+u16 NUM_OPTIONS = 12;
+
 int main(void) {
 	irq_init(NULL);
 	irq_enable(II_VBLANK);
@@ -76,7 +79,7 @@ int main(void) {
     // Initialize channel 3 (wavetable)
     // Alternating 0 and 15 samples
     *SOUND3CNT_L = 1 << 6;
-    for (int i = 0; i < 8; i++) WAVE_RAM[i] = 0x00FF;
+    for (int i = 0; i < 8; i++) WAVE_RAM[i] = WAVETABLE_SAMPLES[0];
     *SOUND3CNT_L = 0;
     *SOUND3CNT_H = 1 << 13;
 
@@ -99,7 +102,7 @@ int main(void) {
     s8 pcm_b_samples[4] = {};
     s16 pcm_b_sample = 0;
 
-    u16 bias = 0x200;
+    s16 bias = 0x200;
 
     // Initialize channels A and B (Direct Sound)
     // Repeatedly play the same sample value
@@ -121,6 +124,7 @@ int main(void) {
     u16 inputs = *KEYINPUT;
 
     u16 cursor = 0;
+    u8 wavetable_sample = 0;
 
     bool odd_frame = false;
 
@@ -184,7 +188,7 @@ int main(void) {
         tte_set_pos(8, 104);
         tte_erase_line();
         tte_write("#{ci:9}Sound bias: 0x");
-        itoa(bias, s, 16);
+        sprintf(s, "%03X", bias);
         tte_write(s);
 
         tte_set_pos(8, 116);
@@ -197,6 +201,12 @@ int main(void) {
         tte_erase_line();
         tte_write("#{ci:11}Unmute disabled channels in NR51: ");
         tte_write(force_nr51 ? "On" : "Off");
+
+        tte_set_pos(8, 140);
+        tte_erase_line();
+        tte_write("#{ci:12}Wavetable sample pattern: 0x");
+        sprintf(s, "%04X", WAVETABLE_SAMPLES[wavetable_sample]);
+        tte_write(s);
 
         u16 new_inputs = *KEYINPUT;
         u16 pressed = ~new_inputs & inputs;
@@ -212,9 +222,9 @@ int main(void) {
 
         if (up ^ down) {
             if (up) {
-                cursor = cursor == 0 ? 10 : cursor - 1;
+                cursor = cursor == 0 ? NUM_OPTIONS - 1 : cursor - 1;
             } else if (down) {
-                cursor = (cursor == 10 ? 0 : cursor + 1);
+                cursor = (cursor == NUM_OPTIONS - 1 ? 0 : cursor + 1);
             }
         }
 
@@ -289,11 +299,13 @@ int main(void) {
                     break;
                 }
                 case 8: {
+                    s16 bias_step = a_held ? 0x100 : 0x10;
                     if (left && bias != 0) {
                         if (bias == 0x3FF) bias = 0x400;
-                        bias -= 16;
+                        bias -= bias_step;
+                        if (bias < 0) bias = 0;
                     } else if (right && bias != 0x3FF) {
-                        bias += 16;
+                        bias += bias_step;
                         if (bias > 0x3FF) bias = 0x3FF;
                     }
                     break;
@@ -308,6 +320,18 @@ int main(void) {
                 }
                 case 10: {
                     force_nr51 = !force_nr51;
+                    break;
+                }
+                case 11: {
+                    if (left) {
+                        wavetable_sample = wavetable_sample == 0 ? 3 : wavetable_sample - 1;
+                    } else {
+                        wavetable_sample = wavetable_sample == 3 ? 0 : wavetable_sample + 1;
+                    }
+                    *SOUND3CNT_L = 1 << 6;
+                    for (int i = 0; i < 8; i++) WAVE_RAM[i] = WAVETABLE_SAMPLES[wavetable_sample];
+                    *SOUND3CNT_L = 1 << 7;
+                    if (wavetable_on) *SOUND3CNT_X = wavetable_freq | (1 << 15);
                     break;
                 }
                 default: break;

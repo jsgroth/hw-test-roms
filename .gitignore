@@ -1,2 +1,6 @@
+# Build artifacts
 **/build
 *.elf
+
+# Emulator save files
+*.sav
