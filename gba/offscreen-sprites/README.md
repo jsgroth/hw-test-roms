@@ -3,7 +3,8 @@
 Test ROM for checking sprite-per-scanline cycle limits when some sprites are partially or fully offscreen.
 
 This test populates OAM with the following sprites, in order:
-* 100x 128x128 affine double size sprites at Y=20, fully horizontally offscreen (X=240)
+* 50x 128x128 affine double size sprites at Y=20, fully horizontally offscreen (X=240, begins at right edge of frame)
+* 50x 128x128 affine double size sprites at Y=20, fully horizontally offscreen (X=384, ends at left edge of frame)
 * 2x 128x128 affine double size sprites at Y=20, partially horizontally offscreen to the right (X=173)
 * 2x 128x128 affine double size sprites at Y=20, partially horizontally offscreen to the left (X=449)
 * 4x 64x64 non-affine sprites at Y=0 at X coordinates 509, 61, 125, 191

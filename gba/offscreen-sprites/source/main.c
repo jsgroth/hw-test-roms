@@ -47,14 +47,25 @@ int main(void) {
     OAM[11] = 0;
     OAM[15] = 1 << 8;
 
-    // 100 fully offscreen 128x128 sprites
-    // Should take 200 cycles
-    for (int i = 0; i < 100; i++) {
+    // 50 fully offscreen 128x128 sprites, at right edge of frame
+    // Should take 100 cycles
+    for (int i = 0; i < 50; i++) {
         vu16* oam_entry = &OAM[4*i];
 
         // 128x128 affine sprite at X=240, Y=20, tile 0, palette 0, parameter group 0
         oam_entry[0] = 20 | (1 << 8) | (1 << 9);
         oam_entry[1] = 240 | (3 << 14);
+        oam_entry[2] = 0;
+    }
+
+    // 50 fully offscreen 128x128 sprites, at left edge of frame
+    // Should take 100 cycles (200 total)
+    for (int i = 50; i < 100; i++) {
+        vu16* oam_entry = &OAM[4*i];
+
+        // 128x128 affine sprite at X=384, Y=20, tile 0, palette 0, parameter group 0
+        oam_entry[0] = 20 | (1 << 8) | (1 << 9);
+        oam_entry[1] = 384 | (3 << 14);
         oam_entry[2] = 0;
     }
 
