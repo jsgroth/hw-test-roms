@@ -1,6 +1,9 @@
 # Build artifacts
 **/build
+*.o
 *.elf
+*.lst
+/genesis/**/symbol.txt
 
 # Emulator save files
 *.sav
